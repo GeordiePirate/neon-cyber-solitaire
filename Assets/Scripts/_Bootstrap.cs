@@ -580,6 +580,10 @@ public static class _Bootstrap
         var gridGo = new GameObject("CyberGrid");
         gridGo.AddComponent<CyberGridBackground>();
 
+        // City skyline silhouette + circuit network panel (the "cyber city" layers)
+        var cityGo = new GameObject("Cityscape");
+        cityGo.AddComponent<CityscapeBackground>();
+
         // Ambient particles
         var particlesGo = new GameObject("AmbientParticles");
         var ps = particlesGo.AddComponent<ParticleSystem>();
