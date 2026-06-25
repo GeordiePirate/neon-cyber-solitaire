@@ -28,3 +28,9 @@ desktop.ini
 
 # Logs
 *.log
+
+# Unity logs folder
+Logs/
+
+# Unity per-user editor state
+UserSettings/

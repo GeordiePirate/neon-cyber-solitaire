@@ -32,6 +32,13 @@ public class ScoreManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
+    /// <summary>Runtime hook for Bootstrap to inject UI references.</summary>
+    public void SetUI(TextMeshProUGUI score, TextMeshProUGUI multiplier)
+    {
+        scoreText = score;
+        multiplierText = multiplier;
+    }
+
     private void Start()
     {
         highScore = PlayerPrefs.GetInt("HighScore", 0);

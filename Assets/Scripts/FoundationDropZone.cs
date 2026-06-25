@@ -19,6 +19,20 @@ public class FoundationDropZone : MonoBehaviour
             zoneRenderer.color = inactiveColor;
     }
 
+    /// <summary>Runtime init for Bootstrap.</summary>
+    public void Init(int index)
+    {
+        foundationIndex = index;
+        targetSuit = index switch
+        {
+            0 => Suit.Hearts,
+            1 => Suit.Diamonds,
+            2 => Suit.Clubs,
+            3 => Suit.Spades,
+            _ => Suit.Hearts
+        };
+    }
+
     private void OnTriggerStay2D(Collider2D other)
     {
         CardInputHandler handler = other.GetComponent<CardInputHandler>();
