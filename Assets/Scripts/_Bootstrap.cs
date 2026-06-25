@@ -90,7 +90,7 @@ public static class _Bootstrap
             camGo.AddComponent<AudioListener>();
         }
         cam.orthographic = true;
-        cam.orthographicSize = 3.5f;  // Pulled back — cards visible but not overwhelming
+        cam.orthographicSize = 5.6f;  // Fits full 7-col board + foundations with margin
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = new Color(0.003f, 0.001f, 0.008f);  // Near-pure deeper black
         cam.allowHDR = true;
@@ -103,7 +103,7 @@ public static class _Bootstrap
             urpCam.renderPostProcessing = true;
             urpCam.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.FastApproximateAntialiasing;
         }
-        cam.transform.position = new Vector3(0, 0, -10);
+        cam.transform.position = new Vector3(-0.2f, -0.8f, -10);  // Centered on board (board sits below origin)
     }
 
     // ═══════════════════════════════════════════════════
@@ -211,12 +211,21 @@ public static class _Bootstrap
             return new Color(0.04f, 0.01f, 0.08f);
         });
 
-        // Card face — GLASS / HOLOGRAPHIC: nearly invisible, just a faint glassy sheen
+        // Card face — HOLOGRAPHIC GLASS PANEL: visible translucent body with a
+        // subtle vertical gradient + faint inner grid, so cards read as solid objects.
         var faceTex  = GenerateTexture(160, 224, (x, y) =>
         {
             if (IsBorder(x, y, 160, 224, 8))
-                return new Color(0.08f, 0.08f, 0.15f, 0.10f);
-            return new Color(0.04f, 0.02f, 0.06f, 0.06f);  // Almost invisible glass
+                return new Color(0.10f, 0.16f, 0.32f, 0.85f);   // brighter glassy rim
+            // Vertical gradient: deeper at bottom, brighter toward top
+            float g = (float)y / 224f;
+            float r = Mathf.Lerp(0.04f, 0.10f, g);
+            float gg = Mathf.Lerp(0.05f, 0.14f, g);
+            float b = Mathf.Lerp(0.12f, 0.26f, g);
+            // Faint inner circuit grid
+            bool grid = (x % 24 < 1) || (y % 24 < 1);
+            float a = grid ? 0.78f : 0.62f;   // SOLID enough to read as a card
+            return new Color(r, gg, b, a);
         });
 
         // Thick neon border (12px wide, white pixels)

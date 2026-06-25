@@ -7,10 +7,10 @@ public class TableauLayoutManager : MonoBehaviour
     public static TableauLayoutManager Instance;
 
     [Header("Layout Settings")]
-    [SerializeField] private Vector2 tableauStart = new Vector2(-3.2f, 0.5f);
-    [SerializeField] private float columnSpacing = 1.1f;
-    [SerializeField] private float cardVerticalSpacing = 0.4f;
-    [SerializeField] private float faceDownOffset = 0.22f;
+    [SerializeField] private Vector2 tableauStart = new Vector2(-3.3f, -0.3f);
+    [SerializeField] private float columnSpacing = 1.15f;
+    [SerializeField] private float cardVerticalSpacing = 0.52f;
+    [SerializeField] private float faceDownOffset = 0.28f;
 
     [Header("Card Prefab")]
     [SerializeField] private GameObject cardPrefab;
@@ -69,7 +69,7 @@ public class TableauLayoutManager : MonoBehaviour
 
                 GameObject go = Instantiate(cardPrefab, startPos, Quaternion.identity, transform);
                 go.name = string.Format("{0}{1}_C{2}R{3}", card.ValueName, card.suit, col, row);
-                go.transform.localScale = Vector3.one * 1.4f;
+                go.transform.localScale = Vector3.one * 0.62f;
 
                 var visual = go.GetComponent<CardVisualController>();
                 if (visual != null) visual.SetupVisuals(card);

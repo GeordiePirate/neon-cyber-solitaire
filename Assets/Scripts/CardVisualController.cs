@@ -94,8 +94,12 @@ public class CardVisualController : MonoBehaviour
             baseBorderColor = neonColor;
             borderRenderer.enabled = true;
 
-            // CRITICAL: card face is nearly transparent hologram — alpha ~0.08
-            backgroundRenderer.color = new Color(1f, 1f, 1f, 0.08f);
+            // Card face — visible holographic glass body (tinted toward the suit colour)
+            backgroundRenderer.color = new Color(
+                Mathf.Lerp(1f, neonColor.r, 0.25f),
+                Mathf.Lerp(1f, neonColor.g, 0.25f),
+                Mathf.Lerp(1f, neonColor.b, 0.25f),
+                0.92f);
 
             // All glow layers — more intense for dramatic bloom
             Color innerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.6f);
