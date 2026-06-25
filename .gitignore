@@ -1,0 +1,30 @@
+# Unity generated
+Library/
+Temp/
+Obj/
+*.csproj
+*.sln
+*.userprefs
+*.unityproj
+*.booproj
+
+# Builds
+Build/
+Builds/
+*.apk
+*.aab
+*.ipa
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Logs
+*.log

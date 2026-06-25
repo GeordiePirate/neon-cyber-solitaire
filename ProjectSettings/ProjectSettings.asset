@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!129 &1
+PlayerSettings:
+  productName: Neon Cyber Solitaire
+  companyName: 
+  bundleIdentifier: com.neoncyber.solitaire
+  defaultScreenWidth: 1125
+  defaultScreenHeight: 2436
+  defaultScreenWidthWeb: 1125
+  defaultScreenHeightWeb: 2436
+  targetDevice: 2
+  resolutionScalingMode: 0
+  accelerometerFrequency: 60
+  useCustomLauncherGraphics: 0
+  useCustomMainMenuGraphics: 0
+  iPadScreenSplashScreen: {fileID: 0}
+  iPhoneScreenSplashScreen: {fileID: 0}
+  AndroidScreenSplashScreen: {fileID: 0}
+  stripEngineCode: 0
+  managedStrippingLevel: 2
+--- !u!218 &1
+GraphicsSettings:
+  m_BuildTargetShaderSettings: []
+  m_RenderPipelineAsset: {fileID: 11400000, guid: 00000000000000000000000000000000, type: 2}
+--- !u!134 &1
+QualitySettings:
+  m_CurrentQuality: 4
