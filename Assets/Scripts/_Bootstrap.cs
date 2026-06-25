@@ -550,31 +550,9 @@ public static class _Bootstrap
 
     static void SetupBackgroundEffects()
     {
-        // Dark gradient with subtle color shift
-        var gradTex = new Texture2D(4, 64, TextureFormat.RGBA32, false);
-        for (int x = 0; x < 4; x++)
-        {
-            for (int y = 0; y < 64; y++)
-            {
-                float t = y / 63f;
-                // Deep cyberpunk gradient: near-black at bottom to dark purple at top
-                Color c = Color.Lerp(
-                    new Color(0.003f, 0.001f, 0.01f),   // Deeper near-black
-                    new Color(0.015f, 0.005f, 0.035f),  // Dark purple hint
-                    t
-                );
-                gradTex.SetPixel(x, y, c);
-            }
-        }
-        gradTex.Apply();
-        gradTex.wrapMode = TextureWrapMode.Clamp;
-
-        var gradGo = new GameObject("BackgroundGradient");
-        var gradSr = gradGo.AddComponent<SpriteRenderer>();
-        gradSr.sprite = Sprite.Create(gradTex, new Rect(0, 0, 4, 64), new Vector2(0.5f, 0.5f), 10f);
-        gradSr.color = Color.white;
-        gradSr.sortingOrder = -11;
-        gradGo.transform.localScale = new Vector3(12f, 10f, 1f);
+        // NOTE: The dark gradient sky is now provided by the real sky.png layer
+        // inside CityscapeBackground (sortingOrder -20). The old procedural
+        // BackgroundGradient was removed so it doesn't render in front of the skyline.
 
         // Animated cyber grid — thin, subtle cyan lines
         var gridGo = new GameObject("CyberGrid");
