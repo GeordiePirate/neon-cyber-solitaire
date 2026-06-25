@@ -45,12 +45,13 @@ public class CityscapeBackground : MonoBehaviour
             skyStart = skyT.localPosition;
         }
 
-        // ── Skyline (keyed neon buildings) ─────────────────────────
+        // ── Skyline (keyed neon buildings, more detailed art) ──────
         var skylineSprite = LoadSprite("skyline.png");
         if (skylineSprite != null)
         {
-            skylineT = MakeLayer("Skyline", skylineSprite, sortingOrder: -17, worldWidth: 15f, yPos: -1.0f,
-                tint: Color.white);
+            // Pivot at bottom-center so it anchors to the horizon, not floating
+            skylineT = MakeLayer("Skyline", skylineSprite, sortingOrder: -17, worldWidth: 16f, yPos: -3.4f,
+                tint: Color.white, pivotY: 0f);
             skylineStart = skylineT.localPosition;
         }
 
@@ -99,7 +100,9 @@ public class CityscapeBackground : MonoBehaviour
         sr.sortingOrder = -16;
         sr.color = new Color(1f, 1f, 1f, 0.85f);
         float scale = Random.Range(0.4f, 0.7f);
-        go.transform.localScale = new Vector3(leftToRight ? -scale : scale, scale, 1f); // flip to face travel dir
+        // Ship art faces RIGHT by default. Face the direction of travel:
+        // moving right -> keep positive; moving left -> flip negative.
+        go.transform.localScale = new Vector3(leftToRight ? scale : -scale, scale, 1f);
         float startX = leftToRight ? -10f : 10f;
         go.transform.localPosition = new Vector3(startX, y, 0.5f);
         var mover = go.AddComponent<ShipMover>();
@@ -108,16 +111,19 @@ public class CityscapeBackground : MonoBehaviour
         ships.Add(mover);
     }
 
-    Transform MakeLayer(string name, Sprite sprite, int sortingOrder, float worldWidth, float yPos, Color tint)
+    Transform MakeLayer(string name, Sprite sprite, int sortingOrder, float worldWidth, float yPos, Color tint, float pivotY = 0.5f)
     {
         var go = new GameObject(name);
         go.transform.SetParent(transform, false);
         var sr = go.AddComponent<SpriteRenderer>();
-        sr.sprite = sprite;
+        // Rebuild the sprite with the requested pivot (default center, 0 = bottom)
+        var tex = sprite.texture;
+        sr.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height),
+            new Vector2(0.5f, pivotY), 100f);
         sr.sortingOrder = sortingOrder;
         sr.color = tint;
         // Scale so the sprite spans `worldWidth` units horizontally
-        float spriteWorldW = sprite.bounds.size.x; // in units at scale 1
+        float spriteWorldW = sr.sprite.bounds.size.x; // in units at scale 1
         float s = worldWidth / spriteWorldW;
         go.transform.localScale = new Vector3(s, s, 1f);
         go.transform.localPosition = new Vector3(0f, yPos, 0f);
