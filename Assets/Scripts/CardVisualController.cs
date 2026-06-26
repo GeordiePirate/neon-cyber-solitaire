@@ -35,10 +35,65 @@ public class CardVisualController : MonoBehaviour
 
     // Holographic scan line effect parameters
     private float holographicAngle = 0f;
+    private bool isFlipping = false;
 
     private void Awake()
     {
         CacheRenderers();
+    }
+
+    // ─── Flip Animation ────────────────────────────────────────
+
+    /// <summary>Animate a holographic flip — squish, swap, un-squish.</summary>
+    public void SetFaceUpAnimated(bool faceUp, System.Action onComplete = null)
+    {
+        if (cardData == null || cardData.isFaceUp == faceUp || isFlipping) return;
+        StartCoroutine(FlipRoutine(faceUp, onComplete));
+    }
+
+    private IEnumerator FlipRoutine(bool targetFaceUp, System.Action onComplete)
+    {
+        isFlipping = true;
+        float halfDuration = 0.12f; // seconds per half-flip
+
+        // ── Phase 1: Squish X to 0 ──────────────────────────
+        float t = 0f;
+        Vector3 baseScale = transform.localScale;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / halfDuration;
+            float sx = Mathf.Lerp(1f, 0f, Mathf.SmoothStep(0f, 1f, t));
+            transform.localScale = new Vector3(sx, baseScale.y, baseScale.z);
+            yield return null;
+        }
+        transform.localScale = new Vector3(0f, baseScale.y, baseScale.z);
+
+        // ── Phase 2: Swap state ─────────────────────────────
+        cardData.isFaceUp = targetFaceUp;
+        UpdateVisualState();
+
+        // Small particle burst at the flip point
+        SpawnFlipParticles();
+
+        // ── Phase 3: Un-squish X back to 1 ──────────────────
+        t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / halfDuration;
+            float sx = Mathf.Lerp(0f, 1f, Mathf.SmoothStep(0f, 1f, t));
+            transform.localScale = new Vector3(sx, baseScale.y, baseScale.z);
+            yield return null;
+        }
+        transform.localScale = baseScale;
+        isFlipping = false;
+        onComplete?.Invoke();
+    }
+
+    private void SpawnFlipParticles()
+    {
+        // Quick visual burst — cyan/magenta sparks
+        var ps = GetComponentInChildren<ParticleSystem>();
+        if (ps != null) ps.Emit(8);
     }
 
     /// <summary>

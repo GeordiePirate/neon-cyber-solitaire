@@ -22,7 +22,9 @@ public static class _Bootstrap
     /// </summary>
     static Material MakeAdditiveSpriteMaterial()
     {
-        Shader sh = Shader.Find("Sprites/Additive")
+        // Prefer custom neon glow shader for best visual quality
+        Shader sh = Shader.Find("Neon/GlowCard")
+                    ?? Shader.Find("Sprites/Additive")
                     ?? Shader.Find("Legacy Shaders/Particles/Additive")
                     ?? Shader.Find("Particles/Standard Unlit")
                     ?? Shader.Find("Sprites/Default")
@@ -35,10 +37,17 @@ public static class _Bootstrap
         return mat;
     }
 
-    /// <summary>Safe sprite material — never returns null.</summary>
+    /// <summary>Safe sprite material — never returns null. Public for WinScreen, particles, etc.</summary>
+    public static Material GetSpriteMaterial()
+    {
+        return MakeSpriteMaterial();
+    }
+
     static Material MakeSpriteMaterial()
     {
-        Shader sh = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Transparent");
+        Shader sh = Shader.Find("Neon/GlowCard")
+                    ?? Shader.Find("Sprites/Default")
+                    ?? Shader.Find("Unlit/Transparent");
         return new Material(sh);
     }
 
@@ -157,6 +166,7 @@ public static class _Bootstrap
         gm.AddComponent<BoardManager>();
         gm.AddComponent<ScoreManager>();
         gm.AddComponent<AbilityManager>();
+        gm.AddComponent<GameStateManager>();
         return gm;
     }
 
@@ -402,8 +412,32 @@ public static class _Bootstrap
         var stBR = suitBRTmp.rectTransform;
         stBR.sizeDelta = new Vector2(0.6f, 0.4f);
 
-        // Glitch particles placeholder
-        new GameObject("GlitchParticles") { transform = { parent = prefab.transform } };
+        // Glitch particles — small cyan/magenta sparks that burst on flip/glitch
+        var glitchGo = new GameObject("GlitchParticles");
+        glitchGo.transform.SetParent(prefab.transform, false);
+        var glitchPs = glitchGo.AddComponent<ParticleSystem>();
+        glitchGo.transform.localPosition = Vector3.zero;
+        
+        var gpMain = glitchPs.main;
+        gpMain.loop = false;
+        gpMain.playOnAwake = false;
+        gpMain.startLifetime = 0.5f;
+        gpMain.startSpeed = 2f;
+        gpMain.startSize = 0.06f;
+        gpMain.startColor = new Color(0f, 0.8f, 1f, 0.8f);
+        gpMain.maxParticles = 20;
+        gpMain.simulationSpace = ParticleSystemSimulationSpace.Local;
+
+        var gpEmission = glitchPs.emission;
+        gpEmission.enabled = false; // we emit manually via script
+
+        var gpShape = glitchPs.shape;
+        gpShape.shapeType = ParticleSystemShapeType.Box;
+        gpShape.scale = new Vector3(0.5f, 0.5f, 0.1f);
+
+        var gpRenderer = glitchPs.GetComponent<ParticleSystemRenderer>();
+        gpRenderer.material = MakeSpriteMaterial();
+        gpRenderer.sortingOrder = 10;
 
         // Collider
         var col = prefab.AddComponent<BoxCollider2D>();

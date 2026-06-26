@@ -12,6 +12,8 @@ public class CardInputHandler : MonoBehaviour
     private int tableauIndex = -1;
     private int cardIndexInPile = -1;
     private bool isDragging = false;
+    private bool hasMoved = false;
+    private const float DRAG_THRESHOLD = 0.15f; // world units before it's a drag
 
     private void Awake()
     {
@@ -23,6 +25,10 @@ public class CardInputHandler : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // Block input if game is won or paused
+        if (GameStateManager.Instance != null && GameStateManager.Instance.CurrentState != GameStateManager.State.Playing)
+            return;
+
         CardData data = visualController.GetCardData();
         if (data == null || !data.isFaceUp) return;
 
@@ -35,6 +41,7 @@ public class CardInputHandler : MonoBehaviour
         offset = transform.position - new Vector3(mouseWorldPos.x, mouseWorldPos.y, 0);
 
         isDragging = true;
+        hasMoved = false;
     }
 
     private void OnMouseDrag()
@@ -42,7 +49,13 @@ public class CardInputHandler : MonoBehaviour
         if (!isDragging) return;
 
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        transform.position = new Vector3(mouseWorldPos.x, mouseWorldPos.y, 0) + offset;
+        Vector3 target = new Vector3(mouseWorldPos.x, mouseWorldPos.y, 0) + offset;
+
+        // Track if the card actually moved from its start position
+        if (!hasMoved && Vector3.Distance(target, originalPosition) > DRAG_THRESHOLD)
+            hasMoved = true;
+
+        transform.position = target;
     }
 
     private void OnMouseUp()
@@ -50,7 +63,26 @@ public class CardInputHandler : MonoBehaviour
         if (!isDragging) return;
         isDragging = false;
 
-        // Raycast to see what we dropped on
+        // ── TAP: auto-move to foundation (double-tap or single-tap if valid) ──
+        if (!hasMoved)
+        {
+            CardData myData = visualController.GetCardData();
+            if (myData != null)
+            {
+                int fIdx = BoardManager.Instance.GetFoundationIndexForSuit(myData.suit);
+                if (BoardManager.Instance.CanMoveToFoundation(myData, fIdx))
+                {
+                    // Animated auto-foundation
+                    StartCoroutine(AutoMoveToFoundation(fIdx));
+                    return;
+                }
+            }
+            // Can't auto-move — just return
+            ReturnToOriginalPosition();
+            return;
+        }
+
+        // ── DRAG: raycast to find drop target ──
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.zero);
 
         if (hit.collider != null)
@@ -131,5 +163,41 @@ public class CardInputHandler : MonoBehaviour
     {
         originalSortingOrder = order;
         visualController.SetSortingOrder(order);
+    }
+
+    // ─── Auto-Move to Foundation (tap) ─────────────────────────
+
+    private System.Collections.IEnumerator AutoMoveToFoundation(int foundationIndex)
+    {
+        CardData data = visualController.GetCardData();
+        if (data == null) yield break;
+
+        // Fly to foundation position
+        Vector3 start = transform.position;
+        Vector3 end = TableauLayoutManager.Instance.GetFoundationPosition(foundationIndex);
+        float duration = 0.25f;
+        float t = 0f;
+
+        // Play glitch effect during flight
+        visualController.PlayGlitchEffect();
+
+        while (t < 1f)
+        {
+            t += Time.deltaTime / duration;
+            transform.position = Vector3.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
+            // Shrink as it approaches
+            float s = Mathf.Lerp(0.62f, 0.35f, t);
+            transform.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+
+        // Execute the move
+        BoardManager.Instance.MoveToFoundation(data, tableauIndex);
+        ScoreManager.Instance?.AddPoints(10);
+
+        // Particle burst
+        visualController.PlayGlitchEffect();
+
+        Destroy(gameObject);
     }
 }

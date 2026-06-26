@@ -195,6 +195,9 @@ public class BoardManager : MonoBehaviour
         if (pile.Count > 0 && !pile[pile.Count - 1].isFaceUp)
         {
             pile[pile.Count - 1].isFaceUp = true;
+            // Use animated flip via the layout manager
+            if (TableauLayoutManager.Instance != null)
+                TableauLayoutManager.Instance.AnimateRevealCard(tableauIndex);
             OnCardRevealed?.Invoke(tableauIndex);
         }
     }

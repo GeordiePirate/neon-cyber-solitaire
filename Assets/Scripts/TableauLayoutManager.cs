@@ -127,4 +127,36 @@ public class TableauLayoutManager : MonoBehaviour
         wastePosition.y,
         -index * 0.01f
     );
+
+    public Vector3 GetFoundationPosition(int index) => new Vector3(
+        foundationStart.x + index * foundationSpacing,
+        foundationStart.y,
+        0f
+    );
+
+    // ─── Animated Reveal ───────────────────────────────────────
+
+    /// <summary>Called by BoardManager when a card should flip face-up with animation.</summary>
+    public void AnimateRevealCard(int tableauIdx)
+    {
+        var pile = BoardManager.Instance.GetTableauPile(tableauIdx);
+        if (pile.Count == 0) return;
+        
+        // Find the last card's game object in this column
+        string namePrefix = $"C{tableauIdx}R{pile.Count - 1}";
+        foreach (Transform child in transform)
+        {
+            if (child.name.Contains(namePrefix))
+            {
+                var visual = child.GetComponent<CardVisualController>();
+                if (visual != null)
+                {
+                    visual.SetFaceUpAnimated(true, () => {
+                        ScoreManager.Instance?.AddRevealPoints();
+                    });
+                }
+                break;
+            }
+        }
+    }
 }
