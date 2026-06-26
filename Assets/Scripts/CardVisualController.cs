@@ -94,12 +94,35 @@ public class CardVisualController : MonoBehaviour
             baseBorderColor = neonColor;
             borderRenderer.enabled = true;
 
-            // Card face — visible holographic glass body (tinted toward the suit colour)
-            backgroundRenderer.color = new Color(
-                Mathf.Lerp(1f, neonColor.r, 0.25f),
-                Mathf.Lerp(1f, neonColor.g, 0.25f),
-                Mathf.Lerp(1f, neonColor.b, 0.25f),
-                0.92f);
+            // Try to use pre-rendered card art from Bootstrap atlas
+            string suitCode = cardData.suit switch
+            {
+                Suit.Spades => "S", Suit.Hearts => "H",
+                Suit.Diamonds => "D", Suit.Clubs => "C", _ => "S"
+            };
+            string cardKey = cardData.ValueName + suitCode;
+            Sprite cardArt = null;
+            if (_Bootstrap.CardSprites != null)
+                _Bootstrap.CardSprites.TryGetValue(cardKey, out cardArt);
+
+            if (cardArt != null)
+            {
+                // Use pre-rendered card art — shows full ornate design
+                backgroundRenderer.sprite = cardArt;
+                backgroundRenderer.color = Color.white;
+                // Hide TMPro overlays — art already has rank/suit baked in
+                foreach (var tmp in new[] { rankTL, suitTL, centerSuit, rankBR, suitBR })
+                    if (tmp != null) tmp.text = "";
+            }
+            else
+            {
+                // Fallback: holographic glass panel with TMPro text
+                backgroundRenderer.color = new Color(
+                    Mathf.Lerp(1f, neonColor.r, 0.25f),
+                    Mathf.Lerp(1f, neonColor.g, 0.25f),
+                    Mathf.Lerp(1f, neonColor.b, 0.25f),
+                    0.92f);
+            }
 
             // All glow layers — more intense for dramatic bloom
             Color innerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.6f);
@@ -153,8 +176,16 @@ public class CardVisualController : MonoBehaviour
         {
             borderRenderer.color = faceDownColor;
             borderRenderer.enabled = true;
-            // Face-down card — opaque with circuit pattern
-            backgroundRenderer.color = Color.white;
+            // Face-down card — use card back sprite or fallback circuit pattern
+            if (_Bootstrap.CardBackSprite != null)
+            {
+                backgroundRenderer.sprite = _Bootstrap.CardBackSprite;
+                backgroundRenderer.color = Color.white;
+            }
+            else
+            {
+                backgroundRenderer.color = Color.white;
+            }
 
             SetGlow(glowInner, Color.clear, false);
             SetGlow(glowOuter, Color.clear, false);

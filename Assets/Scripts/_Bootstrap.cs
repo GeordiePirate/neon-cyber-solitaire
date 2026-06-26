@@ -9,6 +9,9 @@ using TMPro;
 /// </summary>
 public static class _Bootstrap
 {
+    /// <summary>Pre-rendered card face sprites loaded from Resources/card_atlas.</summary>
+    public static System.Collections.Generic.Dictionary<string, Sprite> CardSprites { get; private set; }
+    public static Sprite CardBackSprite { get; private set; }
     static bool _hasRun = false;
 
     /// <summary>
@@ -39,6 +42,44 @@ public static class _Bootstrap
         return new Material(sh);
     }
 
+    /// <summary>
+    /// Loads the pre-rendered card sprite atlas from Resources and slices into per-card sprites.
+    /// Falls back to procedural textures if the atlas isn't found.
+    /// </summary>
+    static void LoadCardSprites()
+    {
+        try
+        {
+            var atlasTex = Resources.Load<Texture2D>("card_atlas");
+            if (atlasTex == null) { Debug.LogWarning("[Bootstrap] card_atlas not found in Resources, using procedural"); return; }
+
+            var backTex = Resources.Load<Texture2D>("card_back");
+            if (backTex != null)
+                CardBackSprite = Sprite.Create(backTex, new Rect(0, 0, backTex.width, backTex.height), new Vector2(0.5f, 0.5f), 100f);
+
+            int cw = 160, ch = 224, cols = 13, rows = 4;
+            string[] ranks = {"A","2","3","4","5","6","7","8","9","10","J","Q","K"};
+            string[] suits = {"S","H","D","C"};
+            CardSprites = new System.Collections.Generic.Dictionary<string, Sprite>();
+
+            for (int row = 0; row < rows; row++)
+            {
+                for (int col = 0; col < cols; col++)
+                {
+                    var rect = new Rect(col * cw, row * ch, cw, ch);
+                    var sprite = Sprite.Create(atlasTex, rect, new Vector2(0.5f, 0.5f), 100f);
+                    string key = ranks[col] + suits[row];
+                    CardSprites[key] = sprite;
+                }
+            }
+            Debug.Log($"[Bootstrap] Loaded {CardSprites.Count} card sprites from atlas");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"[Bootstrap] Failed to load card atlas: {e.Message}");
+        }
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Init()
     {
@@ -51,6 +92,7 @@ public static class _Bootstrap
             log.Start();
 
             SetupCamera();
+            LoadCardSprites();
             var gm = SetupGameManager();
             SetupCanvas(gm);
             var cardPrefab = SetupCardPrefab();
