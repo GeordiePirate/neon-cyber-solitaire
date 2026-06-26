@@ -56,8 +56,8 @@ public static class _Bootstrap
             int cols = 13; // A-10,J,Q,K
             int rows = 4;  // suits
 
-            float actualCardWidth = atlas.width / (float)cols;
-            float actualCardHeight = atlas.height / (float)rows;
+            float actualCardWidth = Mathf.Floor(atlas.width / (float)cols * 100f) / 100f;
+            float actualCardHeight = Mathf.Floor(atlas.height / (float)rows * 100f) / 100f;
 
             Debug.Log($"[Bootstrap] Atlas size: {atlas.width}x{atlas.height}. Using {actualCardWidth}x{actualCardHeight} per card.");
 
