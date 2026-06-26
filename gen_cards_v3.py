@@ -176,17 +176,11 @@ def draw_neon_border(img):
 # ── Card Body ───────────────────────────────────────────────────
 
 def make_card_body():
-    """Create the base dark card body."""
+    """Create subtle dark transparent background — no thick border."""
     img = Image.new('RGBA', (CARD_W, CARD_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    # Dark rounded rect body
-    draw.rounded_rectangle([2, 2, CARD_W - 2, CARD_H - 2], radius=6, fill=CARD_BODY)
-    # Subtle gradient overlay
-    for y in range(CARD_H):
-        t = y / CARD_H
-        alpha = int(15 * (1 - abs(t - 0.5) * 2))
-        if alpha > 0:
-            draw.line([(2, y), (CARD_W - 2, y)], fill=(20, 10, 40, alpha))
+    # Very subtle dark transparent panel — let the neon art shine
+    draw.rounded_rectangle([1, 1, CARD_W - 2, CARD_H - 2], radius=4, fill=(5, 3, 15, 200))
     return img
 
 # ── Pip Layouts ─────────────────────────────────────────────────
@@ -419,16 +413,9 @@ def generate_card(rank, suit):
             
             draw.text((big_x, big_y), symbol, fill=color, font=big_font)
     
-    # ── Neon border ──
-    draw.rounded_rectangle([4, 4, CARD_W - 4, CARD_H - 4], radius=5,
-                          outline=(color[0]//3, color[1]//3, color[2]//3, 120), width=1)
-    
-    # Outer glow border
-    for i in range(2):
-        a = 40 - i * 15
-        r = 5 - i
-        draw.rounded_rectangle([4 - r, 4 - r, CARD_W - 4 + r, CARD_H - 4 + r], radius=5 + r,
-                              outline=(color[0]//4, color[1]//4, color[2]//4, a), width=1)
+    # ── Thin neon outline — just a hairline ──
+    draw.rounded_rectangle([2, 2, CARD_W - 3, CARD_H - 3], radius=4,
+                          outline=(color[0]//2, color[1]//2, color[2]//2, 80), width=1)
     
     return img
 
@@ -438,8 +425,8 @@ def generate_card_back():
     img = Image.new('RGBA', (CARD_W, CARD_H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # Dark body
-    draw.rounded_rectangle([2, 2, CARD_W - 2, CARD_H - 2], radius=6, fill=(8, 4, 25, 240))
+    # Dark transparent body — no thick fill
+    draw.rounded_rectangle([1, 1, CARD_W - 2, CARD_H - 2], radius=4, fill=(4, 2, 12, 220))
     
     cyan = NEON_CYAN
     purple = NEON_PURPLE
@@ -472,15 +459,9 @@ def generate_card_back():
         cb_font = ImageFont.load_default()
     draw.text((cx - 10, cy - 6), "✦", fill=(cyan[0], cyan[1], cyan[2], 150), font=cb_font)
     
-    # Border
-    draw.rounded_rectangle([3, 3, CARD_W - 3, CARD_H - 3], radius=5,
-                          outline=(50, 30, 100, 150), width=1)
-    
-    # Outer glow
-    for i in range(1, 4):
-        a = 25 - i * 5
-        draw.rounded_rectangle([3 - i, 3 - i, CARD_W - 3 + i, CARD_H - 3 + i], 
-                              radius=5 + i, outline=(30, 15, 80, a), width=1)
+    # Thin hairline border
+    draw.rounded_rectangle([1, 1, CARD_W - 2, CARD_H - 2], radius=4,
+                          outline=(30, 20, 60, 80), width=1)
     
     return img
 
