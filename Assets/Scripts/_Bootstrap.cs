@@ -49,49 +49,26 @@ public static class _Bootstrap
     static void LoadCardSprites()
     {
         CardSprites = new System.Collections.Generic.Dictionary<string, Sprite>();
-        var atlas = Resources.Load<Texture2D>("card_atlas");
-        if (atlas != null)
+
+        var textures = Resources.LoadAll<Texture2D>("Cards");
+        if (textures != null && textures.Length > 0)
         {
-            // Adjusted for 2048x1024 atlas
-            int cols = 13; // A-10,J,Q,K
-            int rows = 4;  // suits
-
-            float actualCardWidth = Mathf.Floor(atlas.width / (float)cols * 100f) / 100f;
-            float actualCardHeight = Mathf.Floor(atlas.height / (float)rows * 100f) / 100f;
-
-            Debug.Log($"[Bootstrap] Atlas size: {atlas.width}x{atlas.height}. Using {actualCardWidth}x{actualCardHeight} per card.");
-
-            for (int suit = 0; suit < rows; suit++)
+            foreach (var tex in textures)
             {
-                for (int rank = 0; rank < cols; rank++)
-                {
-                    string rankStr = (rank + 1) switch
-                    {
-                        1 => "A",
-                        11 => "J",
-                        12 => "Q",
-                        13 => "K",
-                        _ => (rank + 1).ToString()
-                    };
-                    string suitStr = suit switch { 0 => "S", 1 => "H", 2 => "D", 3 => "C", _ => "S" };
-                    string key = rankStr + suitStr;
+                // Filename without extension becomes the key, e.g. "AS", "KH", "back"
+                string key = tex.name;
+                if (key == "back") continue; // handled separately
 
-                    Rect rect = new Rect(
-                        rank * actualCardWidth,
-                        suit * actualCardHeight,
-                        actualCardWidth,
-                        actualCardHeight
-                    );
-
-                    var sprite = Sprite.Create(atlas, rect, new Vector2(0.5f, 0.5f), 100f);
-                    CardSprites[key] = sprite;
-                }
+                var sprite = Sprite.Create(tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f), 100f);
+                CardSprites[key] = sprite;
             }
-            Debug.Log($"[Bootstrap] Successfully loaded {CardSprites.Count} card sprites from atlas");
+            Debug.Log($"[Bootstrap] Loaded {CardSprites.Count} individual card sprites from Resources/Cards/");
         }
         else
         {
-            Debug.LogWarning("[Bootstrap] card_atlas.png not found in Resources! Falling back to procedural.");
+            Debug.LogWarning("[Bootstrap] No card textures found in Resources/Cards/! Falling back to procedural.");
         }
 
         // Card back
