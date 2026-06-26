@@ -94,29 +94,16 @@ public class CardVisualController : MonoBehaviour
             baseBorderColor = neonColor;
             borderRenderer.enabled = true;
 
-            // Try to use pre-rendered card art from Bootstrap atlas
-            string suitCode = cardData.suit switch
+            // Try atlas sprite first
+            string key = cardData.ValueName + cardData.suit.ToString()[0];
+            if (_Bootstrap.CardSprites != null && _Bootstrap.CardSprites.TryGetValue(key, out Sprite faceSprite))
             {
-                Suit.Spades => "S", Suit.Hearts => "H",
-                Suit.Diamonds => "D", Suit.Clubs => "C", _ => "S"
-            };
-            string cardKey = cardData.ValueName + suitCode;
-            Sprite cardArt = null;
-            if (_Bootstrap.CardSprites != null)
-                _Bootstrap.CardSprites.TryGetValue(cardKey, out cardArt);
-
-            if (cardArt != null)
-            {
-                // Use pre-rendered card art — shows full ornate design
-                backgroundRenderer.sprite = cardArt;
-                backgroundRenderer.color = Color.white;
-                // Hide TMPro overlays — art already has rank/suit baked in
-                foreach (var tmp in new[] { rankTL, suitTL, centerSuit, rankBR, suitBR })
-                    if (tmp != null) tmp.text = "";
+                backgroundRenderer.sprite = faceSprite;
+                backgroundRenderer.color = Color.white; // let sprite provide color
             }
             else
             {
-                // Fallback: holographic glass panel with TMPro text
+                // Fallback: procedural tint
                 backgroundRenderer.color = new Color(
                     Mathf.Lerp(1f, neonColor.r, 0.25f),
                     Mathf.Lerp(1f, neonColor.g, 0.25f),
@@ -124,59 +111,52 @@ public class CardVisualController : MonoBehaviour
                     0.92f);
             }
 
-            // All glow layers — more intense for dramatic bloom
-            Color innerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.6f);
-            Color outerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.35f);
-            Color ambientColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.15f);
+            bool useText = backgroundRenderer.sprite == null;
+
+            // Stronger glow for holographic pop
+            Color innerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.75f);
+            Color outerColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.45f);
+            Color ambientColor = new Color(neonColor.r, neonColor.g, neonColor.b, 0.25f);
 
             SetGlow(glowInner, innerColor, true);
             SetGlow(glowOuter, outerColor, true);
             SetGlow(glowAmbient, ambientColor, true);
 
-            // Card face text
-            string rankStr = cardData.ValueName;
-            string suitSymbol = cardData.suit switch
+            // Card face text — only when using fallback (no atlas sprite)
+            if (useText)
             {
-                Suit.Hearts => "♥",
-                Suit.Diamonds => "♦",
-                Suit.Clubs => "♣",
-                Suit.Spades => "♠",
-                _ => "?"
-            };
+                string rankStr = cardData.ValueName;
+                string suitSymbol = cardData.suit switch
+                {
+                    Suit.Hearts => "♥",
+                    Suit.Diamonds => "♦",
+                    Suit.Clubs => "♣",
+                    Suit.Spades => "♠",
+                    _ => "?"
+                };
 
-            if (rankTL != null)
-            {
-                rankTL.text = rankStr;
-                rankTL.color = neonColor;
+                if (rankTL != null)        { rankTL.text = rankStr;   rankTL.color = neonColor; }
+                if (suitTL != null)        { suitTL.text = suitSymbol; suitTL.color = neonColor; }
+                if (centerSuit != null)
+                {
+                    centerSuit.text = suitSymbol;
+                    centerSuit.color = new Color(neonColor.r, neonColor.g, neonColor.b, 0.45f);
+                }
+                if (rankBR != null)        { rankBR.text = rankStr;   rankBR.color = neonColor; }
+                if (suitBR != null)        { suitBR.text = suitSymbol; suitBR.color = neonColor; }
             }
-            if (suitTL != null)
+            else
             {
-                suitTL.text = suitSymbol;
-                suitTL.color = neonColor;
-            }
-            if (centerSuit != null)
-            {
-                centerSuit.text = suitSymbol;
-                // Center suit — semi-transparent holographic symbol, clearly visible
-                centerSuit.color = new Color(neonColor.r, neonColor.g, neonColor.b, 0.45f);
-                // Keep large font size that bootstrap set (14+) — don't override small
-            }
-            if (rankBR != null)
-            {
-                rankBR.text = rankStr;
-                rankBR.color = neonColor;
-            }
-            if (suitBR != null)
-            {
-                suitBR.text = suitSymbol;
-                suitBR.color = neonColor;
+                // Hide TMPro overlays — art already has rank/suit baked in
+                foreach (var tmp in new[] { rankTL, suitTL, centerSuit, rankBR, suitBR })
+                    if (tmp != null) tmp.text = "";
             }
         }
         else
         {
             borderRenderer.color = faceDownColor;
             borderRenderer.enabled = true;
-            // Face-down card — use card back sprite or fallback circuit pattern
+            // Face-down card — use card back sprite
             if (_Bootstrap.CardBackSprite != null)
             {
                 backgroundRenderer.sprite = _Bootstrap.CardBackSprite;
