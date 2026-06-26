@@ -52,8 +52,6 @@ public static class _Bootstrap
         var atlas = Resources.Load<Texture2D>("card_atlas");
         if (atlas != null)
         {
-            int cardWidth = 160;
-            int cardHeight = 224;
             int cols = 13; // A-10,J,Q,K
             int rows = 4;  // suits: Spades, Hearts, Diamonds, Clubs
 
@@ -68,8 +66,13 @@ public static class _Bootstrap
                     string suitStr = suit switch { 0 => "S", 1 => "H", 2 => "D", 3 => "C", _ => "S" };
                     string key = rankStr + suitStr;
 
+                    // Calculate cell size from actual imported texture dimensions
+                    // (handles Unity's POT rescaling gracefully)
+                    float cellW = atlas.width / (float)cols;
+                    float cellH = atlas.height / (float)rows;
+
                     var sprite = Sprite.Create(atlas,
-                        new Rect(rank * cardWidth, suit * cardHeight, cardWidth, cardHeight),
+                        new Rect(rank * cellW, atlas.height - (suit + 1) * cellH, cellW, cellH),
                         new Vector2(0.5f, 0.5f), 100f);
 
                     CardSprites[key] = sprite;
