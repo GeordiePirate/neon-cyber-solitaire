@@ -52,8 +52,14 @@ public static class _Bootstrap
         var atlas = Resources.Load<Texture2D>("card_atlas");
         if (atlas != null)
         {
+            // Adjusted for 2048x1024 atlas
             int cols = 13; // A-10,J,Q,K
-            int rows = 4;  // suits: Spades, Hearts, Diamonds, Clubs
+            int rows = 4;  // suits
+
+            float actualCardWidth = atlas.width / (float)cols;
+            float actualCardHeight = atlas.height / (float)rows;
+
+            Debug.Log($"[Bootstrap] Atlas size: {atlas.width}x{atlas.height}. Using {actualCardWidth}x{actualCardHeight} per card.");
 
             for (int suit = 0; suit < rows; suit++)
             {
@@ -61,32 +67,37 @@ public static class _Bootstrap
                 {
                     string rankStr = (rank + 1) switch
                     {
-                        1 => "A", 11 => "J", 12 => "Q", 13 => "K", _ => (rank + 1).ToString()
+                        1 => "A",
+                        11 => "J",
+                        12 => "Q",
+                        13 => "K",
+                        _ => (rank + 1).ToString()
                     };
                     string suitStr = suit switch { 0 => "S", 1 => "H", 2 => "D", 3 => "C", _ => "S" };
                     string key = rankStr + suitStr;
 
-                    // Calculate cell size from actual imported texture dimensions
-                    // (handles Unity's POT rescaling gracefully)
-                    float cellW = atlas.width / (float)cols;
-                    float cellH = atlas.height / (float)rows;
+                    Rect rect = new Rect(
+                        rank * actualCardWidth,
+                        suit * actualCardHeight,
+                        actualCardWidth,
+                        actualCardHeight
+                    );
 
-                    var sprite = Sprite.Create(atlas,
-                        new Rect(rank * cellW, atlas.height - (suit + 1) * cellH, cellW, cellH),
-                        new Vector2(0.5f, 0.5f), 100f);
-
+                    var sprite = Sprite.Create(atlas, rect, new Vector2(0.5f, 0.5f), 100f);
                     CardSprites[key] = sprite;
                 }
             }
-            Debug.Log($"[Bootstrap] Loaded {CardSprites.Count} card sprites from atlas");
+            Debug.Log($"[Bootstrap] Successfully loaded {CardSprites.Count} card sprites from atlas");
         }
         else
         {
-            Debug.LogWarning("[Bootstrap] card_atlas.png not found in Resources!");
+            Debug.LogWarning("[Bootstrap] card_atlas.png not found in Resources! Falling back to procedural.");
         }
 
         // Card back
         CardBackSprite = Resources.Load<Sprite>("card_back");
+        if (CardBackSprite == null)
+            Debug.LogWarning("[Bootstrap] card_back.png not found in Resources!");
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
