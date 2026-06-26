@@ -71,9 +71,11 @@ public static class _Bootstrap
             Debug.LogWarning("[Bootstrap] No card textures found in Resources/Cards/! Falling back to procedural.");
         }
 
-        // Card back
-        CardBackSprite = Resources.Load<Sprite>("card_back");
-        if (CardBackSprite == null)
+        // Card back — load as Texture2D, create Sprite at runtime
+        var backTex = Resources.Load<Texture2D>("card_back");
+        if (backTex != null)
+            CardBackSprite = Sprite.Create(backTex, new Rect(0, 0, backTex.width, backTex.height), new Vector2(0.5f, 0.5f), 100f);
+        else
             Debug.LogWarning("[Bootstrap] card_back.png not found in Resources!");
     }
 
