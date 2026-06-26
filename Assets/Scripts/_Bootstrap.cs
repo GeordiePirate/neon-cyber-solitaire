@@ -22,13 +22,10 @@ public static class _Bootstrap
     /// </summary>
     static Material MakeAdditiveSpriteMaterial()
     {
-        // Prefer custom neon glow shader for best visual quality
-        Shader sh = Shader.Find("Neon/GlowCard")
-                    ?? Shader.Find("Sprites/Additive")
-                    ?? Shader.Find("Legacy Shaders/Particles/Additive")
+        // For glow layers — use simple additive blending
+        Shader sh = Shader.Find("Sprites/Additive")
                     ?? Shader.Find("Particles/Standard Unlit")
-                    ?? Shader.Find("Sprites/Default")
-                    ?? Shader.Find("Unlit/Transparent");
+                    ?? Shader.Find("Sprites/Default");
         var mat = new Material(sh);
         // Force additive blending (One One) so glow layers accumulate light
         if (mat.HasProperty("_SrcBlend")) mat.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
@@ -45,8 +42,7 @@ public static class _Bootstrap
 
     static Material MakeSpriteMaterial()
     {
-        Shader sh = Shader.Find("Neon/GlowCard")
-                    ?? Shader.Find("Sprites/Default")
+        Shader sh = Shader.Find("Sprites/Default")
                     ?? Shader.Find("Unlit/Transparent");
         return new Material(sh);
     }

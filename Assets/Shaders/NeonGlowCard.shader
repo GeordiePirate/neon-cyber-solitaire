@@ -18,11 +18,6 @@ Shader "Neon/GlowCard"
 
         [Header(Data Fragment Effect)]
         _FragmentAlpha ("Fragment Noise", Range(0, 0.3)) = 0.05
-
-        [Header(Blending)]
-        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 5
-        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 10
-        [Enum(UnityEngine.Rendering.BlendOp)] _BlendOp ("Blend Op", Float) = 0
     }
 
     SubShader
@@ -32,10 +27,9 @@ Shader "Neon/GlowCard"
         Pass
         {
             Name "NeonGlow"
-            Tags { "LightMode"="UniversalForward" }
+            Tags { "LightMode"="Universal2D" }
 
-            Blend [_SrcBlend] [_DstBlend]
-            BlendOp [_BlendOp]
+            Blend SrcAlpha OneMinusSrcAlpha
             ZWrite Off
             Cull Off
 
@@ -58,31 +52,30 @@ Shader "Neon/GlowCard"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float4 color : COLOR;
-                float3 worldPos : TEXCOORD1;
             };
 
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
 
+            // NOTE: No _MainTex_ST in CBUFFER — 2D SRP Batcher doesn't support it.
+            // UVs pass through untransformed (no tiling/offset needed for card sprites).
             CBUFFER_START(UnityPerMaterial)
-                float4 _MainTex_ST;
-                float4 _Color;
-                float4 _GlowColor;
-                float _GlowIntensity;
-                float _GlowPulseSpeed;
-                float _GlowWidth;
-                float4 _ScanColor;
-                float _ScanSpeed;
-                float _FragmentAlpha;
+                half4 _Color;
+                half4 _GlowColor;
+                half _GlowIntensity;
+                half _GlowPulseSpeed;
+                half _GlowWidth;
+                half4 _ScanColor;
+                half _ScanSpeed;
+                half _FragmentAlpha;
             CBUFFER_END
 
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
                 OUT.positionCS = TransformObjectToHClip(IN.positionOS.xyz);
-                OUT.uv = TRANSFORM_TEX(IN.uv, _MainTex);
+                OUT.uv = IN.uv;  // Pass UV through — no ST transform
                 OUT.color = IN.color;
-                OUT.worldPos = TransformObjectToWorld(IN.positionOS.xyz);
                 return OUT;
             }
 
@@ -90,14 +83,13 @@ Shader "Neon/GlowCard"
             {
                 float time = _Time.y;
 
-                // ── Sample card face texture ─────────────────
+                // Sample card face texture
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv);
                 half4 baseColor = texColor * _Color * IN.color;
 
-                // ── Edge glow detection ──────────────────────
-                float2 uvEdge = IN.uv;
-                float edgeX = min(uvEdge.x, 1.0 - uvEdge.x);
-                float edgeY = min(uvEdge.y, 1.0 - uvEdge.y);
+                // Edge glow detection — works on direct UVs
+                float edgeX = min(IN.uv.x, 1.0 - IN.uv.x);
+                float edgeY = min(IN.uv.y, 1.0 - IN.uv.y);
                 float edgeDist = min(edgeX, edgeY);
 
                 // Feather the glow
@@ -107,29 +99,26 @@ Shader "Neon/GlowCard"
                 float pulse = 0.7 + 0.3 * sin(time * _GlowPulseSpeed);
                 glow *= pulse;
 
-                // ── Travelling scan line ─────────────────────
+                // Travelling scan line
                 float scanPos = frac(time * _ScanSpeed * 0.1);
                 float scanLine = 1.0 - abs(IN.uv.y - scanPos) * 10.0;
                 scanLine = saturate(scanLine * 2.0);
                 float scanGlow = scanLine * 0.3 * (0.5 + 0.5 * sin(time * 4.0));
 
-                // ── Data fragment noise ──────────────────────
+                // Data fragment noise
                 float noise = sin(IN.uv.x * 137.0 + IN.uv.y * 73.0 + time * 3.0) * 0.5 + 0.5;
                 float fragment = noise < _FragmentAlpha ? 0.2 : 0.0;
 
-                // ── Combine layers ───────────────────────────
+                // Combine layers
                 half4 glowLayer = half4(_GlowColor.rgb * _GlowIntensity, glow * _GlowIntensity);
                 half4 scanLayer = half4(_ScanColor.rgb, scanGlow);
 
                 half4 finalColor = baseColor;
-                // Additive glow on edges
                 finalColor.rgb += glowLayer.rgb * glowLayer.a;
-                // Scan line highlight
                 finalColor.rgb += scanLayer.rgb * scanLayer.a;
-                // Data fragment flicker
                 finalColor.rgb += half4(1,0.5,1,1).rgb * fragment;
 
-                // ── Final alpha: use main texture alpha or glow ──
+                // Final alpha
                 finalColor.a = max(baseColor.a, glowLayer.a * 0.5);
 
                 return finalColor;
