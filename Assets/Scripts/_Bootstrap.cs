@@ -198,11 +198,13 @@ public static class _Bootstrap
             bool hLine = y % 40 < 3 || y % 56 < 2;
             bool vLine = x % 40 < 3 || x % 56 < 2;
             bool dot = (x % 28 < 4 && y % 28 < 4) || (x % 28 > 24 && y % 28 > 24);
-            bool diamond = Mathf.Abs(x - 80) + Mathf.Abs(y - 112) < 36;
+            bool diamond = Mathf.Abs(x - 80) + Mathf.Abs(y - 112) < 40;
+            bool diamondInner = Mathf.Abs(x - 80) + Mathf.Abs(y - 112) < 24;
             bool corner = (x < 30 && y < 30) || (x > 130 && y < 30) || (x < 30 && y > 194) || (x > 130 && y > 194);
             bool cross = (Mathf.Abs(x - 80) < 3 || Mathf.Abs(y - 112) < 3) && (Mathf.Abs(x - 80) + Mathf.Abs(y - 112)) > 20;
 
-            if (diamond) return new Color(0f, 0.5f, 1f, 0.5f);
+            if (diamondInner) return new Color(0f, 0.5f, 1f, 0.6f);
+            if (diamond) return new Color(0f, 0.3f, 0.7f, 0.4f);
             if (corner) return new Color(0.2f, 0.05f, 0.4f, 0.4f);
             if (cross) return new Color(0f, 0.6f, 1f, 0.6f);
             if (dot) return new Color(0f, 0.7f, 1f, 0.5f);
@@ -211,26 +213,35 @@ public static class _Bootstrap
             return new Color(0.04f, 0.01f, 0.08f);
         });
 
-        // Card face — HOLOGRAPHIC GLASS PANEL: visible translucent body with a
-        // subtle vertical gradient + faint inner grid, so cards read as solid objects.
+        // Card face — DARK HOLOGRAPHIC PANEL: filled dark body with circuit traces,
+        // so cards read as solid objects with a cyberpunk feel.
         var faceTex  = GenerateTexture(160, 224, (x, y) =>
         {
             if (IsBorder(x, y, 160, 224, 8))
-                return new Color(0.10f, 0.16f, 0.32f, 0.85f);   // brighter glassy rim
+                return new Color(0.06f, 0.12f, 0.25f, 0.90f);   // darker rim
+
             // Vertical gradient: deeper at bottom, brighter toward top
-            float g = (float)y / 224f;
-            float r = Mathf.Lerp(0.04f, 0.10f, g);
-            float gg = Mathf.Lerp(0.05f, 0.14f, g);
-            float b = Mathf.Lerp(0.12f, 0.26f, g);
-            // Faint inner circuit grid
-            bool grid = (x % 24 < 1) || (y % 24 < 1);
-            float a = grid ? 0.78f : 0.62f;   // SOLID enough to read as a card
-            return new Color(r, gg, b, a);
+            float t = (float)y / 224f;
+            float dark = Mathf.Lerp(0.35f, 0.70f, t);  // dark at bottom, slightly lighter top
+            float r = Mathf.Lerp(0.03f, 0.08f, t);
+            float g = Mathf.Lerp(0.02f, 0.06f, t);
+            float b = Mathf.Lerp(0.08f, 0.14f, t);
+
+            // Faint circuit-board traces
+            bool circuitH = (x % 18 < 1) && (y % 36 > 8) && (y % 36 < 28);
+            bool circuitV = (y % 18 < 1) && (x % 36 > 8) && (x % 36 < 28);
+            bool node = ((x + 9) % 36 < 3 && (y + 9) % 36 < 3);
+
+            float alpha = 0.72f;  // SOLID — cards read as real objects
+            if (node)       { r = 0.0f; g = 0.30f; b = 0.60f; alpha = 0.40f; }
+            else if (circuitH || circuitV) { r = 0.0f; g = 0.15f; b = 0.30f; alpha = 0.25f; }
+
+            return new Color(r * dark, g * dark, b * dark, alpha);
         });
 
-        // Thick neon border (12px wide, white pixels)
+        // Thick neon border (16px wide, white pixels — read as neon glow ring)
         var borderTex = GenerateTexture(160, 224, (x, y) =>
-            IsBorder(x, y, 160, 224, 12) ? Color.white : Color.clear);
+            IsBorder(x, y, 160, 224, 16) ? Color.white : Color.clear);
 
         var backSprite  = Sprite.Create(backTex,  new Rect(0, 0, 160, 224), new Vector2(0.5f, 0.5f), 100f);
         var faceSprite  = Sprite.Create(faceTex,  new Rect(0, 0, 160, 224), new Vector2(0.5f, 0.5f), 100f);
@@ -285,7 +296,7 @@ public static class _Bootstrap
         rankTL.transform.SetParent(prefab.transform, false);
         var rankTLTmp = rankTL.GetComponent<TextMeshPro>();
         rankTLTmp.text = "";
-        rankTLTmp.fontSize = 11f;          // Bigger corner rank
+        rankTLTmp.fontSize = 14f;          // Bigger corner rank
         rankTLTmp.alignment = TextAlignmentOptions.TopLeft;
         rankTLTmp.color = Color.clear;
         rankTLTmp.fontStyle = FontStyles.Bold;
@@ -299,7 +310,7 @@ public static class _Bootstrap
         suitTL.transform.SetParent(prefab.transform, false);
         var suitTLTmp = suitTL.GetComponent<TextMeshPro>();
         suitTLTmp.text = "";
-        suitTLTmp.fontSize = 8f;          // Bigger corner suit
+        suitTLTmp.fontSize = 10f;          // Bigger corner suit
         suitTLTmp.alignment = TextAlignmentOptions.TopLeft;
         suitTLTmp.color = Color.clear;
         suitTLTmp.fontStyle = FontStyles.Bold;
@@ -313,7 +324,7 @@ public static class _Bootstrap
         centerSuit.transform.SetParent(prefab.transform, false);
         var centerSuitTmp = centerSuit.GetComponent<TextMeshPro>();
         centerSuitTmp.text = "";
-        centerSuitTmp.fontSize = 22f;         // HUGE center symbol
+        centerSuitTmp.fontSize = 26f;         // HUGE center symbol
         centerSuitTmp.alignment = TextAlignmentOptions.Center;
         centerSuitTmp.color = Color.clear;
         centerSuitTmp.fontStyle = FontStyles.Bold;
